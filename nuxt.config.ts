@@ -9,4 +9,8 @@ export default defineNuxtConfig({
     bese_url: 'https://aihubmix.com/v1',
     api_key: 'sk-BCRfnMLZBnKwjIV6013bCbAbC7184c829d9959344237E93e',
   },
+  modules: ['@nuxtjs/tailwindcss'],
+  tailwindcss: {
+    cssPath: ['~/assets/css/tailwind.css', { injectPosition: 'first' }],
+  },
 })

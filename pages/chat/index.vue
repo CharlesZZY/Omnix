@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import sender from './modules/sender.vue'
+import Sender from './modules/sender.vue'
 </script>
 
 <template>
   <div>
-    <sender />
+    <Sender />
   </div>
 </template>

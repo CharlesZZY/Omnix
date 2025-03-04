@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { XProvider } from 'ant-design-x-vue'
 </script>
 
 <template>
-  <XProvider>
+  <div>
     <NuxtLink to="/chat">
       chat
     </NuxtLink>
-  </XProvider>
+  </div>
 </template>

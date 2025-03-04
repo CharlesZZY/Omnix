@@ -3,16 +3,34 @@ import { Flex, message } from 'ant-design-vue'
 import { Sender } from 'ant-design-x-vue'
 import { ref } from 'vue'
 
-defineOptions({ name: 'AXSenderBasic' })
+defineOptions({ name: 'Sender' })
 
 const value = ref('Hello? this is X!')
 const loading = ref<boolean>(false)
+const data = ref<string>('')
 
 async function handleSubmit() {
   value.value = ''
   loading.value = true
-  const { data } = await useFetch('/api/chat')
-  console.log(data.value)
+  const res = await $fetch<ReadableStream>('/api/chat', {
+    responseType: 'stream',
+  })
+  const reader = res.pipeThrough(new TextDecoderStream()).getReader()
+
+  // Read the chunk of data as we get it
+  while (true) {
+    const { value, done } = await reader.read()
+
+    if (done)
+      break
+
+    console.log('Received:', value)
+  }
+
+  // for await (const chunk of data) {
+  //   console.log(chunk)
+  // }
+  // console.log(data.value)
   message.info('Send message!')
 }
 
@@ -25,11 +43,9 @@ function handleCancel() {
 <template>
   <Flex vertical gap="middle">
     <Sender
-      :loading="loading"
-      :value="value"
-      @update:value="value = $event"
-      @submit="handleSubmit"
+      :loading="loading" :value="value" @update:value="value = $event" @submit="handleSubmit"
       @cancel="handleCancel"
     />
+    {{ data }}
   </Flex>
 </template>
