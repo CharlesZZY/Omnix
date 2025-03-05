@@ -1,5 +1,5 @@
 {
-	"name": "nuxt-app",
+	"name": "omnix",
 	"type": "module",
 	"private": true,
 	"packageManager": "pnpm@10.5.2+sha512.da9dc28cd3ff40d0592188235ab25d3202add8a207afbedc682220e4a0029ffbff4562102b9e6e46b4e3f9e8bd53e6d05de48544b0c57d4b0179e22c76d1199b",
@@ -16,19 +16,28 @@
 		"@ant-design/icons-vue": "^7.0.1",
 		"@langchain/core": "^0.3.42",
 		"@langchain/openai": "^0.4.4",
+		"@microsoft/fetch-event-source": "^2.0.1",
 		"ant-design-vue": "^4.2.6",
 		"ant-design-x-vue": "^1.0.2",
 		"langchain": "^0.3.19",
+		"markdown-it": "^14.1.0",
+		"md-editor-v3": "^5.3.2",
 		"nuxt": "^3.15.4",
+		"nuxt-auth-utils": "0.5.16",
 		"supports-color": "^8.1.1",
+		"uuid": "^11.1.0",
 		"vue": "latest",
-		"vue-router": "latest"
+		"vue-router": "latest",
+		"zod": "^3.24.2"
 	},
 	"devDependencies": {
 		"@antfu/eslint-config": "^4.4.0",
 		"@nuxtjs/tailwindcss": "^6.13.1",
+		"@types/markdown-it": "^14.1.2",
+		"@types/uuid": "^10.0.0",
 		"@typescript-eslint/eslint-plugin": "^8.26.0",
 		"@typescript-eslint/parser": "^8.26.0",
-		"eslint": "^9.21.0"
+		"eslint": "^9.21.0",
+		"vue-tsc": "^2.2.8"
 	}
 }
