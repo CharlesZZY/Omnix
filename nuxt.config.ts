@@ -4,6 +4,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   app: {
     pageTransition: { name: 'page', mode: 'out-in' },
+    rootAttrs: {
+      id: '__omnix',
+    },
   },
   runtimeConfig: {
     bese_url: 'https://aihubmix.com/v1',

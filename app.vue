@@ -26,7 +26,7 @@ body {
   padding: 0;
 }
 
-#__nuxt {
+#__omnix {
   width: 100vw !important;
   height: 100vh !important;
 }

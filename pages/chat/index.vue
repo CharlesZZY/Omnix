@@ -1,10 +1,10 @@
 <script setup lang="tsx">
 import type { EventSourceMessage } from '@microsoft/fetch-event-source'
-import type { BubbleListProps, ConversationsProps } from 'ant-design-x-vue'
+import type { BubbleListProps } from 'ant-design-x-vue'
 import type { AssistantMessage, Chat, UserMessage } from '~/types/chat'
-import { CommentOutlined, CopyOutlined, SyncOutlined } from '@ant-design/icons-vue'
-import { Button, Flex, Space } from 'ant-design-vue'
-import { BubbleList, Conversations, Sender } from 'ant-design-x-vue'
+import { ClientOnly } from '#components'
+import { Flex } from 'ant-design-vue'
+import { BubbleList, Sender } from 'ant-design-x-vue'
 import { MdPreview } from 'md-editor-v3'
 import { v4 as uuidv4 } from 'uuid'
 import { computed, ref } from 'vue'
@@ -45,12 +45,6 @@ const roles: BubbleListProps['roles'] = {
     messageRender: content => (
       <MdPreview autoFoldThreshold={10000} modelValue={content} />
     ),
-    footer: (
-      <Space>
-        <Button type="text" size="small" icon={<SyncOutlined />} />
-        <Button type="text" size="small" icon={<CopyOutlined />} />
-      </Space>
-    ),
   },
 }
 
@@ -78,15 +72,15 @@ async function sendMessage(query: string) {
     return
   }
   const messages = chatList.value.flatMap(({ userMessage, aiMessage }) => [
-    { role: userMessage.role, content: userMessage.content },
-    { role: aiMessage.role, content: aiMessage.content },
+    { id: userMessage.id, role: userMessage.role, content: userMessage.content },
+    { id: userMessage.id, role: aiMessage.role, content: aiMessage.content },
   ])
 
   ready(query)
 
   const lastChat = getLastChat()
 
-  messages.push({ role: lastChat.userMessage.role, content: lastChat.userMessage.content })
+  messages.push({ id: lastChat.userMessage.id, role: lastChat.userMessage.role, content: lastChat.userMessage.content })
 
   async function onOpen(_response: Response): Promise<void> {
     lastChat.status = 'loading'
@@ -115,6 +109,7 @@ async function sendMessage(query: string) {
 
   await connect('/api/chat', {
     messages,
+    model: 'gpt-4o-mini',
   }, onOpen, onMessage, onClose, onError)
 
   loading.value = false
@@ -124,42 +119,20 @@ function stop() {
   loading.value = false
 }
 
-const style = computed(() => ({
-  background: 'rgba(0, 0, 0, 0.05)',
-}))
+// const style = computed(() => ({
+//   background: 'rgba(0, 0, 0, 0.05)',
+// }))
 
-const items: ConversationsProps['items'] = Array.from({ length: 4 }).map((_, index) => ({
-  key: `item${index + 1}`,
-  label: `Conversation Item ${index + 1}`,
-  group: index === 3 ? 'Group2' : 'Group1',
-}))
-
-// const groupable: ConversationsProps['groupable'] = {
-//   sort(a, b) {
-//     if (a === b)
-//       return 0
-
-//     return a === 'Group2' ? -1 : 1
-//   },
-//   title: (group, { components: { GroupTitle } }) =>
-//     group
-//       ? (
-//           <GroupTitle>
-//             <Space>
-//               <CommentOutlined />
-//               <span>{group}</span>
-//             </Space>
-//           </GroupTitle>
-//         )
-//       : (
-//           <GroupTitle />
-//         ),
-// }
+// const items: ConversationsProps['items'] = Array.from({ length: 4 }).map((_, index) => ({
+//   key: `item${index + 1}`,
+//   label: `Conversation Item ${index + 1}`,
+//   group: index === 3 ? 'Group2' : 'Group1',
+// }))
 </script>
 
 <template>
   <Flex class="h-full">
-    <!-- <Conversations class="w-52 px-8 mt-0 h-full" :style="style" :groupable="groupable" default-active-key="item1" :items="items" /> -->
+    <!-- <Conversations class="w-52 px-8 mt-0 h-full" :style="style" groupable default-active-key="item1" :items="items" /> -->
     <Flex vertical class="w-full flex-1 relative flex h-full max-w-full overflow-hidden">
       <Flex vertical align="center" class="w-full flex-1 overflow-y-auto p-4">
         <ClientOnly>
