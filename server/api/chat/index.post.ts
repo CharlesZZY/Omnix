@@ -1,10 +1,16 @@
 import type { AssistantMessage, UserMessage } from '~/types/chat'
 import { ChatOpenAI } from '@langchain/openai'
-import { HttpResponseOutputParser } from 'langchain/output_parsers'
 import { addMessage, createConversation } from '~/server/service/conversation'
 import { internalServerError, unauthorized } from '~/utils/service'
 
 const runtimeConfig = useRuntimeConfig()
+
+interface EventStreamMessage {
+  id?: string
+  event?: 'message' | 'end'
+  retry?: number
+  data: string
+}
 
 export default defineEventHandler(async (event) => {
   const { user } = await getUserSession(event)
@@ -12,8 +18,9 @@ export default defineEventHandler(async (event) => {
     return unauthorized(event)
   }
 
-  const { model, messages } = await readBody(event)
-  let { conversationId } = await readBody(event)
+  const { model, messages, conversationId: inputConversationId } = await readBody(event)
+
+  let conversationId = inputConversationId
 
   if (!conversationId) {
     try {
@@ -34,9 +41,13 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  const chain = llm.pipe(new HttpResponseOutputParser({ contentType: 'text/event-stream' }))
+  const eventStream = createEventStream(event)
+  eventStream.send()
+  eventStream.onClosed(async () => {
+    await eventStream.close()
+  })
 
-  const stream = await chain.stream(messages)
+  const stream = await llm.stream(messages)
 
   const aiMessage: AssistantMessage = {
     id: crypto.randomUUID(),
@@ -44,10 +55,22 @@ export default defineEventHandler(async (event) => {
     content: '',
   }
 
-  // for await (const chunk of stream) {
-  //   console.log(chunk)
-  //   aiMessage.content += chunk
-  // }
+  for await (const chunk of stream) {
+    aiMessage.content += JSON.parse(JSON.stringify(chunk.content))
+    const eventStreamMessage: EventStreamMessage = {
+      id: aiMessage.id,
+      event: 'message',
+      data: JSON.stringify(chunk.content),
+    }
+    await eventStream.push(eventStreamMessage)
+  }
+
+  await eventStream.push({
+    id: aiMessage.id,
+    event: 'end',
+    data: '',
+  })
+  await eventStream.close()
 
   try {
     await addMessage(conversationId, lastUserMessage, aiMessage, model)
@@ -55,10 +78,4 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     return internalServerError(event, String(error), '服务器异常，请稍后重试')
   }
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-    },
-  })
 })
