@@ -1,22 +1,17 @@
 <script setup lang="ts">
+import { theme } from 'ant-design-vue'
 import { XProvider } from 'ant-design-x-vue'
 </script>
 
 <template>
   <XProvider>
-    <NuxtRouteAnnouncer />
-
-    <NuxtLoadingIndicator />
-
-    <!-- <AppHeader /> -->
-
-    <main class="w-full h-full">
-      <NuxtLayout>
-        <NuxtPage />
-      </NuxtLayout>
-    </main>
-
-    <!-- <AppFooter /> -->
+    <NuxtLayout>
+      <!-- <AppHeader /> -->
+      <NuxtRouteAnnouncer />
+      <NuxtLoadingIndicator />
+      <NuxtPage />
+      <!-- <AppFooter /> -->
+    </NuxtLayout>
   </XProvider>
 </template>
 
@@ -24,11 +19,13 @@ import { XProvider } from 'ant-design-x-vue'
 body {
   margin: 0;
   padding: 0;
+  /* overflow: hidden; */
+  position: absolute;
+  inset: 0;
 }
 
 #__omnix {
-  width: 100vw !important;
-  height: 100vh !important;
+  height: 100%;
 }
 
 .page-enter-active,

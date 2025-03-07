@@ -1,7 +1,15 @@
-<script lang="ts">
+<script setup lang="ts">
+import ConversationLayout from '~/layouts/conversation.vue'
 
+definePageMeta({
+  pageTransition: false,
+  layoutTransition: false,
+  middleware: [
+    'auth',
+  ],
+})
 </script>
 
 <template>
-  <div>12121</div>
+  <ConversationLayout />
 </template>

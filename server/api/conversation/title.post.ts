@@ -3,7 +3,7 @@ import { updateConversationTitle } from '~/server/service/conversation'
 import { errorResponse, successResponse, unauthorized } from '~/utils/service'
 
 const schema = z.object({
-  conversationId: z.number(),
+  conversationId: z.string().length(36),
   title: z.string().max(100),
 })
 

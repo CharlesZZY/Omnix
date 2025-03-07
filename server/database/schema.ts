@@ -13,7 +13,7 @@ export const USER = mysqlTable('user', {
 })
 
 export const CONVERSATION = mysqlTable('conversation', {
-  id: serial('id').primaryKey(),
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()).notNull(),
   userId: bigint('user_id', { mode: 'number', unsigned: true })
     .notNull()
     .references(() => USER.id, { onDelete: 'cascade' }),
@@ -23,7 +23,7 @@ export const CONVERSATION = mysqlTable('conversation', {
 
 export const USER_MESSAGE = mysqlTable('user_message', {
   id: varchar('id', { length: 36 }).primaryKey().notNull(),
-  conversationId: bigint('conversation_id', { mode: 'number', unsigned: true })
+  conversationId: varchar('conversation_id', { length: 36 })
     .notNull()
     .references(() => CONVERSATION.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
@@ -32,7 +32,7 @@ export const USER_MESSAGE = mysqlTable('user_message', {
 
 export const AI_MESSAGE = mysqlTable('ai_message', {
   id: varchar('id', { length: 36 }).primaryKey().notNull(),
-  conversationId: bigint('conversation_id', { mode: 'number', unsigned: true })
+  conversationId: varchar('conversation_id', { length: 36 })
     .notNull()
     .references(() => CONVERSATION.id, { onDelete: 'cascade' }),
   userMessageId: varchar('user_message_id', { length: 36 })

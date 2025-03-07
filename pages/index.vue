@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import ConversationLayout from '~/layouts/conversation.vue'
+
+definePageMeta({
+  middleware: [
+    'auth',
+  ],
+})
 </script>
 
 <template>
-  <div>
-    <NuxtLink to="/chat">
-      chat
-    </NuxtLink>
-  </div>
+  <ConversationLayout />
 </template>

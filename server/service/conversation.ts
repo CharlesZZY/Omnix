@@ -5,14 +5,14 @@ import { AI_MESSAGE, CONVERSATION, USER_MESSAGE } from '../database/schema'
 
 const db = useDrizzle()
 
-export async function createConversation(userId: number): Promise<number | null> {
+export async function createConversation(userId: number): Promise<string> {
   const result = await db.insert(CONVERSATION).values({
     userId,
   }).$returningId()
-  return result[0].id || null
+  return result[0].id
 }
 
-export async function getConversationsById(conversationId: number) {
+export async function getConversationsById(conversationId: string) {
   const result = await db
     .select()
     .from(CONVERSATION)
@@ -30,30 +30,46 @@ export async function getConversationsByUserId(userId: number) {
     .orderBy(desc(CONVERSATION.createdAt))
 }
 
-export async function getMessagesByConversationId(conversationId: number) {
+export async function getMessagesByConversationId(conversationId: string) {
   const userMessages = await db
-    .select()
+    .select({
+      id: USER_MESSAGE.id,
+      content: USER_MESSAGE.content,
+      createdAt: USER_MESSAGE.createdAt,
+    })
     .from(USER_MESSAGE)
     .where(eq(USER_MESSAGE.conversationId, conversationId))
     .orderBy(USER_MESSAGE.createdAt)
 
   const aiMessages = await db
-    .select()
+    .select({
+      id: AI_MESSAGE.id,
+      content: AI_MESSAGE.content,
+      model: AI_MESSAGE.model,
+      createdAt: AI_MESSAGE.createdAt,
+    })
     .from(AI_MESSAGE)
     .where(eq(AI_MESSAGE.conversationId, conversationId))
     .orderBy(AI_MESSAGE.createdAt)
 
   const messages = []
   for (let i = 0; i < userMessages.length; i++) {
-    messages.push(userMessages[i])
-    if (aiMessages[i])
-      messages.push(aiMessages[i])
+    messages.push({
+      ...userMessages[i],
+      role: 'user',
+    })
+    if (aiMessages[i]) {
+      messages.push({
+        ...aiMessages[i],
+        role: 'assistant',
+      })
+    }
   }
 
   return messages
 }
 
-export async function addMessage(conversationId: number, userMessage: UserMessage, aiMessage: AssistantMessage, model: string) {
+export async function addMessage(conversationId: string, userMessage: UserMessage, aiMessage: AssistantMessage, model: string) {
   await db.insert(USER_MESSAGE).values({
     id: userMessage.id,
     conversationId,
@@ -69,10 +85,10 @@ export async function addMessage(conversationId: number, userMessage: UserMessag
   })
 }
 
-export async function deleteConversation(conversationId: number) {
+export async function deleteConversation(conversationId: string) {
   return await db.delete(CONVERSATION).where(eq(CONVERSATION.id, conversationId))
 }
 
-export async function updateConversationTitle(conversationId: number, title: string) {
+export async function updateConversationTitle(conversationId: string, title: string) {
   return await db.update(CONVERSATION).set({ title }).where(eq(CONVERSATION.id, conversationId))
 }
