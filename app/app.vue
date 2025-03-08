@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { Analytics } from '@vercel/analytics/nuxt'
 import { XProvider } from 'ant-design-x-vue'
 </script>
 
 <template>
   <XProvider>
     <NuxtLayout>
+      <Analytics />
       <NuxtRouteAnnouncer />
       <NuxtLoadingIndicator />
       <NuxtPage />
@@ -16,7 +18,6 @@ import { XProvider } from 'ant-design-x-vue'
 body {
   margin: 0;
   padding: 0;
-  /* overflow: hidden; */
   position: absolute;
   inset: 0;
 }
