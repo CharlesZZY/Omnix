@@ -2,6 +2,10 @@
 import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons-vue'
 import { Button, Form, FormItem, Input, InputPassword, message } from 'ant-design-vue'
 
+definePageMeta({
+  layout: false,
+})
+
 const formData = reactive({
   username: '',
   password: '',

@@ -2,6 +2,10 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons-vue'
 import { Button, Form, FormItem, Input, InputPassword, message } from 'ant-design-vue'
 
+definePageMeta({
+  layout: false,
+})
+
 const { fetch: refreshSession } = useUserSession()
 const credentials = reactive({
   username: '',
