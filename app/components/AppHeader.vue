@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
-import { Divider, Flex } from 'ant-design-vue'
+import { Flex } from 'ant-design-vue'
 
 withDefaults(defineProps<{
   title?: string
@@ -16,6 +16,6 @@ withDefaults(defineProps<{
       <span class="text-2xl font-bold">{{ title }}</span>
       <component :is="tool" v-if="tool" />
     </Flex>
-    <Divider class="m-0" />
+    <!-- <Divider class="m-0" /> -->
   </Flex>
 </template>

@@ -2,7 +2,7 @@
 import { Divider, Flex } from 'ant-design-vue'
 
 defineOptions({
-  name: 'Sider',
+  name: 'SiderLayout',
 })
 </script>
 

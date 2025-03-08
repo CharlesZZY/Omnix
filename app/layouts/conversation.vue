@@ -1,60 +1,50 @@
 <script setup lang="tsx">
-import type { BubbleListProps, ConversationsProps } from 'ant-design-x-vue'
+import type { BubbleProps, ConversationsProps } from 'ant-design-x-vue'
+import type { Api } from '~/types/api'
 import type { AssistantMessage, Chat, ChatSettings, EventStreamMessage, UserMessage } from '~/types/chat'
-import { ClientOnly } from '#components'
-import { Collapse, CollapsePanel, Flex, Form, FormItem, Input, InputPassword, message, Select, SelectOption, Slider, Textarea } from 'ant-design-vue'
-import { BubbleList, Conversations, Sender } from 'ant-design-x-vue'
+import { vAutoAnimate } from '@formkit/auto-animate'
+import { Flex, message } from 'ant-design-vue'
+import { Bubble, Sender } from 'ant-design-x-vue'
 import { MdPreview } from 'md-editor-v3'
 import { v4 as uuidv4 } from 'uuid'
-import { computed, ref } from 'vue'
-import ChatLayout from '~/layouts/chat.vue'
-import Sider from '~/layouts/sider.vue'
-import { useLLMConfigStore } from '~/stores/LLMConfig'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import ChatLayout from './chat.vue'
 import 'md-editor-v3/lib/preview.css'
 
 defineOptions({ name: 'ConversationLayout' })
 
 const route = useRoute()
-const router = useRouter()
 const llmConfig = useLLMConfigStore()
 
 const id = ref(route.params.id)
 
 const container = ref<HTMLElement | null>(null)
-const listRef = ref<InstanceType<typeof BubbleList> | null>(null)
-const chatList = ref<Chat[]>([])
-const conversationId = ref<string>('')
-const loading = ref<boolean>(false)
+const userScrolled = ref(false)
+
 const query = ref<string>('')
+const conversationId = ref<string>('')
+const conversationTitle = ref<string>('')
+const loading = ref<boolean>(false)
+const chatList = ref<Chat[]>([])
+const conversations = ref<ConversationsProps['items']>([])
+
+const markdownRender: BubbleProps['messageRender'] = content => (
+  <MdPreview autoFoldThreshold={10000} modelValue={content} />
+)
 
 const displayChatList = computed(() =>
   chatList.value.reduce((acc, { userMessage, aiMessage }, index, array) => {
     const isLast = index === array.length - 1
     acc.push(
-      { id: userMessage.id, role: userMessage.role, content: userMessage.content },
-      { id: aiMessage.id, role: aiMessage.role, content: aiMessage.content, loading: isLast && getLastChat().status === 'pending' },
+      { id: userMessage.id, role: userMessage.role, content: userMessage.content, placement: 'end' },
+      { id: aiMessage.id, role: aiMessage.role, content: aiMessage.content, placement: 'start', variant: 'borderless', messageRender: markdownRender, loading: isLast && getLastChat().status === 'pending' },
     )
     return acc
-  }, [] as { id: string, role: string, content: string, loading?: boolean }[]),
+  }, [] as BubbleProps[]),
 )
 
 function getLastChat() {
   return chatList.value[chatList.value.length - 1]
-}
-
-const roles: BubbleListProps['roles'] = {
-  user: {
-    // header: 'User',
-    placement: 'end',
-  },
-  assistant: {
-    // header: 'Assistant',
-    placement: 'start',
-    variant: 'outlined',
-    messageRender: content => (
-      <MdPreview autoFoldThreshold={10000} modelValue={content} />
-    ),
-  },
 }
 
 function ready(query: string) {
@@ -93,6 +83,8 @@ async function sendMessage(inputQuery: string) {
 
   messages.push({ id: lastChat.userMessage.id, role: lastChat.userMessage.role, content: lastChat.userMessage.content })
 
+  scrollToBottom(container.value)
+
   async function onOpen(_response: Response): Promise<void> {
     lastChat.status = 'loading'
     return await Promise.resolve()
@@ -106,18 +98,27 @@ async function sendMessage(inputQuery: string) {
           if (lastChat.aiMessage.role === 'assistant') {
             lastChat.aiMessage.content += data
           }
+          scrollToBottom(container.value)
           break
         }
         case 'title_generation': {
           const { title } = JSON.parse(ev.data)
-          console.log('title', title)
-
+          conversationTitle.value = title
           break
         }
         case 'conversation_detail_metadata': {
           const { conversationId: id } = JSON.parse(ev.data)
+
+          if (conversations.value && !conversationId.value) {
+            conversations.value.unshift({
+              key: id,
+              label: conversationTitle.value || '新对话',
+            })
+          }
           conversationId.value = id
-          window.history.replaceState(null, '', `/chat/${id}`)
+
+          // window.history.pushState(null, '', `/chat/${id}`)
+          navigateTo(`/chat/${id}`)
           break
         }
         case 'end': {
@@ -146,13 +147,12 @@ async function sendMessage(inputQuery: string) {
   }, onOpen, onMessage, onClose, onError)
 
   loading.value = false
+  scrollToBottom(container.value)
 }
 
 function stop() {
   loading.value = false
 }
-
-const conversations = ref<ConversationsProps['items']>([])
 
 const settings = ref<ChatSettings>({
   // baseUrlPrefix: 'https://',
@@ -235,18 +235,9 @@ async function getConversations() {
   }
 }
 
-const activeKey = ref<string>('')
-
-interface ReturnType {
-  success: boolean
-  data: {
-    messages: (UserMessage | AssistantMessage)[]
-  }
-}
-
 async function getMessages(id: string) {
   try {
-    const { success, data } = await $fetch<ReturnType>(`/api/conversation/${id}`)
+    const { success, data } = await $fetch<Promise<Api.Response<{ messages: (UserMessage | AssistantMessage)[] }>>>(`/api/conversation/${id}`)
 
     if (success && data) {
       const { messages } = data
@@ -268,7 +259,8 @@ async function getMessages(id: string) {
   }
   catch (error) {
     console.error(error)
-    message.error('服务器异常，请稍后重试')
+    message.error(`Unable to load conversation ${id}`)
+    navigateTo('/')
   }
   finally {
     loading.value = false
@@ -276,7 +268,7 @@ async function getMessages(id: string) {
 }
 
 async function scrollToBottom(element: HTMLElement | null) {
-  if (element) {
+  if (element && !userScrolled.value) {
     await nextTick(() => {
       element.scrollTo({
         top: element.scrollHeight,
@@ -286,106 +278,66 @@ async function scrollToBottom(element: HTMLElement | null) {
   }
 }
 
+function handleScroll() {
+  if (container.value) {
+    const { scrollTop, scrollHeight, clientHeight } = container.value
+    if (scrollTop + clientHeight >= scrollHeight - 200) {
+      userScrolled.value = false
+    }
+    else {
+      userScrolled.value = true
+    }
+  }
+}
+
 onMounted(async () => {
   await getConversations()
   if (id.value) {
     conversationId.value = String(id.value)
-    activeKey.value = String(id.value)
     await getMessages(String(id.value))
     scrollToBottom(container.value)
   }
 })
 
-async function changeConversation(id: string) {
-  await navigateTo(`/chat/${id}`)
-}
+onMounted(async () => {
+  await nextTick(() => {
+    if (container.value) {
+      container.value.addEventListener('scroll', handleScroll)
+    }
+  })
+})
 </script>
 
 <template>
-  <Flex class="flex-1 max-h-full">
-    <ClientOnly>
-      <Sider class="w-80 resize-none max-h-full h-full">
-        <template #header>
-          <AppHeader class="w-full h-14" title="Settings & Conversations" />
-        </template>
-        <template #settings>
-          <Flex justify="center">
-            <Form layout="vertical" class="w-full">
-              <!-- 基础配置 -->
-              <FormItem label="Base URL">
-                <Input v-model:value="settings.baseUrl" placeholder="请输入base_url">
-                  <!-- <template #addonBefore>
-                    <Select v-model:value="settings.baseUrlPrefix">
-                      <SelectOption value="http://">
-                        http://
-                      </SelectOption>
-                      <SelectOption value="https://">
-                        https://
-                      </SelectOption>
-                    </Select>
-                  </template> -->
-                </Input>
-              </FormItem>
-
-              <FormItem label="Api Key">
-                <InputPassword v-model:value="settings.apiKey" placeholder="请输入Api Key" />
-              </FormItem>
-
-              <FormItem label="Model">
-                <Input v-model:value="settings.model" placeholder="请输入model" />
-              </FormItem>
-
-              <FormItem label="Temperature">
-                <Slider v-model:value="settings.temperature" :min="0" :max="2" :step="0.1" />
-              </FormItem>
-
-              <FormItem label="Max Tokens">
-                <Slider v-model:value="settings.maxTokens" :min="1" :max="4096" :step="1" />
-              </FormItem>
-
-              <FormItem label="System Prompt">
-                <Textarea v-model:value="settings.systemPrompt" :rows="4" placeholder="请输入系统提示词" />
-              </FormItem>
-
-              <!-- 高级配置 -->
-              <Collapse>
-                <CollapsePanel key="1" header="高级设置">
-                  <FormItem v-for="item in settings.advanced" :key="item.label" :label="item.label">
-                    <Slider v-model:value="item.value" :min="item.min" :max="item.max" :step="item.step" />
-                  </FormItem>
-                </CollapsePanel>
-              </Collapse>
-            </Form>
+  <Flex v-auto-animate class="flex-1 max-h-full">
+    <ChatLayout vertical class="w-full flex-1 relative flex h-full max-w-full overflow-hidden">
+      <template #header>
+        <AppHeader class="w-full h-14" title="Omnix" />
+      </template>
+      <Flex vertical align="center" class="w-full max-h-full overflow-y-auto flex-1 mb-2">
+        <div ref="container" class="w-full flex justify-center items-center overflow-y-auto px-4">
+          <Flex vertical gap="middle" class="w-full h-full max-w-3xl">
+            <Bubble
+              v-for="msg in displayChatList"
+              :key="msg.id" :content="msg.content"
+              :variant="msg.variant"
+              :message-render="msg.messageRender"
+              :placement="msg.placement"
+              :loading="msg.loading"
+            />
           </Flex>
-        </template>
-        <template #conversations>
-          <div>
-            <Conversations class="px-0 py-0 mt-0 max-w-full h-auto overflow-hidden" :items="conversations" :active-key="activeKey" @active-change="changeConversation" />
-          </div>
-        </template>
-      </Sider>
-      <ChatLayout vertical class="w-full flex-1 relative flex h-full max-w-full overflow-hidden">
-        <template #header>
-          <AppHeader class="w-full h-14" title="Omnix" />
-        </template>
-        <Flex vertical align="center" class="w-full max-h-full overflow-y-auto flex-1 p-4">
-          <div ref="container" class="w-full flex justify-center items-center overflow-y-auto px-4">
-            <div class="w-full h-full max-w-3xl">
-              <BubbleList ref="listRef" :roles="roles" :items="displayChatList" />
-            </div>
-          </div>
-        </Flex>
-        <Sender
-          class="m-auto max-w-3xl"
-          :loading="loading" :value="query" placeholder="Type your message here..."
-          @update:value="query = $event"
-          @submit="sendMessage"
-          @cancel="stop"
-        />
-        <template #footer>
-          <AppFooter />
-        </template>
-      </ChatLayout>
-    </ClientOnly>
+        </div>
+      </Flex>
+      <Sender
+        class="m-auto !max-w-[calc(48rem+25px)]"
+        :loading="loading" :value="query" placeholder="Type your message here..."
+        @update:value="query = $event"
+        @submit="sendMessage"
+        @cancel="stop"
+      />
+      <template #footer>
+        <AppFooter />
+      </template>
+    </ChatLayout>
   </Flex>
 </template>

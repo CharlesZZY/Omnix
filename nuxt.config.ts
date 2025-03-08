@@ -1,5 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  srcDir: 'app/',
+  serverDir: './server',
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
   app: {
@@ -8,11 +10,14 @@ export default defineNuxtConfig({
       id: '__omnix',
     },
   },
-  runtimeConfig: {
-    bese_url: 'https://aihubmix.com/v1',
-    api_key: 'sk-BCRfnMLZBnKwjIV6013bCbAbC7184c829d9959344237E93e',
-  },
-  modules: ['@nuxtjs/tailwindcss', 'nuxt-auth-utils', '@nuxt/icon', '@pinia/nuxt', 'pinia-plugin-persistedstate/nuxt'],
+  modules: [
+    '@nuxtjs/tailwindcss',
+    'nuxt-auth-utils',
+    '@nuxt/icon',
+    '@pinia/nuxt',
+    'pinia-plugin-persistedstate/nuxt',
+    '@formkit/auto-animate/nuxt',
+  ],
   tailwindcss: {
     cssPath: ['~/assets/css/tailwind.css', { injectPosition: 'first' }],
   },
@@ -22,10 +27,11 @@ export default defineNuxtConfig({
   },
   nitro: {
     prerender: {
-      routes: ['/'],
+      routes: ['/', '/login', '/register'],
     },
   },
   piniaPluginPersistedstate: {
     storage: 'localStorage',
   },
+  ssr: false,
 })

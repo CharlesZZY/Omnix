@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getConversationsById, getMessagesByConversationId } from '~~/server/service/conversation'
+import { deleteConversation } from '~~/server/service/conversation'
 import { badRequest, errorResponse, successResponse, unauthorized } from '~/utils/service'
 
 const schema = z.object({
@@ -18,13 +18,8 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const id = data.id
-    const conversationId = await getConversationsById(id)
-    if (!conversationId) {
-      return badRequest(event, '', `Unable to load conversation ${id}`)
-    }
-    const messages = await getMessagesByConversationId(id)
-    return successResponse({ messages })
+    const res = await deleteConversation(data.id)
+    return successResponse({ res })
   }
   catch (error: any) {
     return errorResponse(event, 500, error.message || error)

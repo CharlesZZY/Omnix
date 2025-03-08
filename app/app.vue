@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { theme } from 'ant-design-vue'
 import { XProvider } from 'ant-design-x-vue'
 </script>
 
 <template>
   <XProvider>
     <NuxtLayout>
-      <!-- <AppHeader /> -->
       <NuxtRouteAnnouncer />
       <NuxtLoadingIndicator />
       <NuxtPage />
-      <!-- <AppFooter /> -->
     </NuxtLayout>
   </XProvider>
 </template>

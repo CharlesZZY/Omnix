@@ -1,10 +1,8 @@
 import type { AssistantMessage, ConversationDetailMetadata, EventStreamMessage, TitleGenerationMetadata, UserMessage } from '~/types/chat'
-import { ChatOpenAI, OpenAI } from '@langchain/openai'
+import { ChatOpenAI } from '@langchain/openai'
 import { z } from 'zod'
-import { addMessage, createConversation, updateConversationTitle } from '~/server/service/conversation'
+import { addMessage, createConversation, updateConversationTitle } from '~~/server/service/conversation'
 import { badRequest, errorResponse, internalServerError, unauthorized } from '~/utils/service'
-
-const runtimeConfig = useRuntimeConfig()
 
 const UserMessageSchema = z.object({
   id: z.string().length(36),
@@ -101,6 +99,13 @@ export default defineEventHandler(async (event) => {
     await eventStream.push(eventStreamMessage)
   }
 
+  try {
+    await addMessage(conversationId, lastUserMessage, aiMessage, model)
+  }
+  catch (error) {
+    return internalServerError(event, String(error), '服务器异常，请稍后重试')
+  }
+
   // 判断是否是用户与AI的第一次交互
   const isFirstInteraction = messages.filter(m => m.role === 'user').length === 1
 
@@ -133,13 +138,6 @@ export default defineEventHandler(async (event) => {
     data: '',
   }
   await eventStream.push(endMessage)
-
-  try {
-    await addMessage(conversationId, lastUserMessage, aiMessage, model)
-  }
-  catch (error) {
-    return internalServerError(event, String(error), '服务器异常，请稍后重试')
-  }
 
   await eventStream.close()
 })

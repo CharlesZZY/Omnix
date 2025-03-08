@@ -10,7 +10,7 @@ export function createServiceConfig(env: Env.ImportMeta) {
       host: DATABASE_HOST || 'localhost',
       port: Number(DATABASE_PORT || '3306'),
       user: DATABASE_USER || 'root',
-      password: DATABASE_PASSWORD || 'zzy13152810650',
+      password: DATABASE_PASSWORD || 'password',
       database: DATABASE_NAME || 'omnix',
     },
   }

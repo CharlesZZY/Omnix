@@ -1,4 +1,4 @@
-import { getConversationsByUserId } from '~/server/service/conversation'
+import { getConversationsByUserId } from '~~/server/service/conversation'
 import { errorResponse, successResponse, unauthorized } from '~/utils/service'
 
 export default defineEventHandler(async (event) => {

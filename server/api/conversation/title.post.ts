@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { updateConversationTitle } from '~/server/service/conversation'
+import { updateConversationTitle } from '~~/server/service/conversation'
 import { errorResponse, successResponse, unauthorized } from '~/utils/service'
 
 const schema = z.object({

@@ -1,7 +1,7 @@
 import type { Env } from '~/types/env'
 import process from 'node:process'
 import { defineConfig } from 'drizzle-kit'
-import { createServiceConfig } from './utils/service'
+import { createServiceConfig } from '~/utils/service'
 
 const { database } = createServiceConfig(process.env as unknown as Env.ImportMeta)
 

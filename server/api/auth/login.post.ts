@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getUserByUsername } from '~/server/service/user'
+import { getUserByUsername } from '~~/server/service/user'
 import { badRequest, internalServerError, successResponse, unauthorized } from '~/utils/service'
 
 const schema = z.object({
